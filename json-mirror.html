@@ -1,0 +1,99 @@
+<link rel="import" href="../polymer/polymer.html">
+
+
+<style>
+  .JsonMirror {
+    /*display: none;*/
+  }
+</style>
+
+<dom-module id="json-mirror">
+  <template></template>
+
+  <script>
+
+  Polymer({
+    is: "json-mirror",
+    behaviors: [EscherMixins.LifeCycle],
+
+    properties: {
+      json: {
+        type: String,
+        value: '',
+        observer: "_jsonChanged"
+      },
+      name: {
+        type: String,
+        value: '',
+      },
+      id: {
+        type: String,
+        value: ("" + Math.random()).replace(/[0-9]\./ig, "idx-"),
+      },
+      oneway: {
+        type: Boolean,
+        value: true,
+        //observer: "_onewayChanged"
+      }
+    },
+
+    // mutation observers
+    _jsonChanged: function() {
+      if (this.mirror) {
+        this.mirror.setValue(this.json);
+	console.log('changed js1');
+      }
+    },
+  
+    // utility functions
+    _themeStylesheet: function (theme) {
+      return ""
+    },
+    _modeScript: function (mode) {
+      return ""
+    },
+
+    ready: function () {
+      this.mirror = this.json;
+
+// select the target node
+var target = document.querySelector('#' + this.uid);
+ 
+// create an observer instance
+var observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    console.log(mutation.type);
+  });    
+});
+ 
+// configuration of the observer:
+var config = { attributes: true, childList: true, characterData: true };
+ 
+// pass in the target node, as well as the observer options
+observer.observe(target, config);
+ 
+// later, you can stop observing
+observer.disconnect();
+   },
+
+  get immediateValue () {
+    if (this.mirror) {
+      return this.mirror.getValue()
+    } else {
+      return ""
+    }
+  },
+    domInit: function() {
+      //this.$.theme.href = this._themeStylesheet(this.theme)
+      //this.$.mode.src = this._modeScript(this.mode)
+
+      var self = this
+
+      this.mirror.on("change", function () {
+	  console.log('changed js2'');
+          self.fire("change")
+      })
+    }
+  });
+  </script>
+</dom-module>
