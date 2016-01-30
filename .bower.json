@@ -5,9 +5,9 @@
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "181e5cc5b90e878c72b2c23e505a5181ae7780d6"
+    "commit": "02fb9e3e900e1cca0f3992b224b06c4966deda4d"
   },
-  "_source": "git://github.com/shashi/code-mirror.git",
+  "_source": "git://github.com/dioptre/json-mirror.git",
   "_target": "master",
-  "_originalSource": "shashi/code-mirror"
+  "_originalSource": "dioptre/json-mirror"
 }
