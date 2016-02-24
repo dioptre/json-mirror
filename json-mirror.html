@@ -8,43 +8,55 @@
 </style>
 
 <dom-module id="json-mirror">
-  <template></template>
+  <template><span id="rendered"></span></template>
 
   <script>
-
   Polymer({
     is: "json-mirror",
     behaviors: [EscherMixins.LifeCycle],
-
+    render: function() {
+	var uid = this.getAttribute('uid');
+	if (typeof(window.jsm) === 'undefined')
+		window.jsm = {};
+	if (typeof(window.jsm[uid]) === 'undefined')
+		window.jsm[uid] = {};
+	if (typeof(window.jsm[uid].subscribers) === 'undefined')
+		window.jsm[uid].subscribers = [];
+	if (typeof(window.jsm[uid].polymer) === 'undefined')
+		window.jsm[uid].polymer = this;  //TODO: could remove this if its taking up resources
+	for(var i = 0; i < window.jsm[uid].subscribers.length; i++) {
+		window.jsm[uid].subscribers[i].fn(this.value)
+	};
+	if (this.mirror)
+		this.mirror.value = this.value;
+    },
     properties: {
-      json: {
+      value: {
         type: String,
         value: '',
-        observer: "_jsonChanged"
+        observer: "_valueChanged"
       },
-      name: {
-        type: String,
-        value: '',
-      },
-      id: {
+      uid: {
         type: String,
         value: ("" + Math.random()).replace(/[0-9]\./ig, "idx-"),
       },
-      oneway: {
+      category: {
+        type: String,
+        value: ("" + Math.random()).replace(/[0-9]\./ig, "idx-"),
+      },
+      autoNotify: {
         type: Boolean,
-        value: true,
-        //observer: "_onewayChanged"
+        value: false        
       }
     },
-
+    updateAndNotify: function(v) {
+	this.value = v;
+	this.fire("change");
+    },
     // mutation observers
-    _jsonChanged: function() {
-      if (this.mirror) {
-        this.mirror.setValue(this.json);
-	console.log('changed js1');
-      }
-    },
-  
+    _valueChanged: function() {
+	this.render();
+    },  
     // utility functions
     _themeStylesheet: function (theme) {
       return ""
@@ -52,47 +64,43 @@
     _modeScript: function (mode) {
       return ""
     },
-
     ready: function () {
-      this.mirror = this.json;
+	if (typeof(window.jsm) === 'undefined')
+		window.jsm = {};
+	if (typeof(window.jsm[this.uid]) === 'undefined')
+		window.jsm[this.uid] = {};
+	if (typeof(window.jsm[this.uid].subscribers) === 'undefined')
+		window.jsm[this.uid].subscribers = [];
+	window.jsm[this.uid].polymer = this; //TODO: could remove this if its taking up resources
+      	if (window.jsm[this.uid].subscribers.length === 0) {
+		console.log("No callbacks setup yet for json action window.jsm['" + this.uid + "'].subscibers push an object {id: 'yourref', fn: function(v) { dosomethingwithjs(v);}}  to this array to setup your callback. Use your id to remove it later if you wish." );
+	}
+	this.mirror = { parent: this, value: this.value, uid: this.uid, readOnly: this.readOnly, category: this.category};
 
-// select the target node
-var target = document.querySelector('#' + this.uid);
- 
-// create an observer instance
-var observer = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    console.log(mutation.type);
-  });    
-});
- 
-// configuration of the observer:
-var config = { attributes: true, childList: true, characterData: true };
- 
-// pass in the target node, as well as the observer options
-observer.observe(target, config);
- 
-// later, you can stop observing
-observer.disconnect();
    },
 
   get immediateValue () {
     if (this.mirror) {
-      return this.mirror.getValue()
+      return this.mirror.value;
     } else {
       return ""
     }
   },
     domInit: function() {
-      //this.$.theme.href = this._themeStylesheet(this.theme)
-      //this.$.mode.src = this._modeScript(this.mode)
-
-      var self = this
-
-      this.mirror.on("change", function () {
-	  console.log('changed js2'');
-          self.fire("change")
-      })
+	//Polymer.dom($0).children //Do this in chrome inspector on polymer object to see signals etc.
+	//this.$.theme.href = this._themeStylesheet(this.theme)
+	//this.$.mode.src = this._modeScript(this.mode)
+	var self = this
+	if (this.autoNotify) { //True can cause recursion if the server re-updates payload
+		Object.observe(this.mirror, function(changes) {
+		  //changes.forEach(function(change) {
+		  this.immediateValue = this.value;
+		  this.fire("change");
+		})
+	}
+    },
+    domReady: function() {
+	this.render();
     }
   });
   </script>
